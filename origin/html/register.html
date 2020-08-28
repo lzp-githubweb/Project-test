@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册</title>
+    <link rel="shortcut icon" href="#">
+    <link rel="stylesheet" href="/resource/css/bootstrap.min.css">
+</head>
+
+<body>
+    <div id="header">
+        <div class="container">
+            <ul class="nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/index.html">首页</a>
+                </li>
+                <li class="nav-item">
+                    <a id="shoppingCart" class="nav-link" href=#>购物车</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/html/login.html">登录</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="/html/register.html" tabindex="-1" aria-disabled="true">注册</a>
+                </li>
+                <!-- <li class="nav-item">
+                    <a id="quit" class="nav-link">退出登录</a>
+                </li> -->
+            </ul>
+        </div>
+    </div>
+    <div id="content">
+        <div class=" d-flex container justify-content-center">
+            <div class="col-6">
+                <h3 class="text-center">注册</h3>
+                <form>
+                    <div class="form-group">
+                        <label for="">用户名</label>
+                        <input type="text" class="form-control" id="username">
+                        <span id="usernameTips">
+
+                        </span>
+                    </div>
+                    <div class="form-group">
+                        <label for=" ">密码</label>
+                        <input type="password" class="form-control" id="password">
+                        <span id="passwordTips"></span>
+                    </div>
+                    <div class="text-center">
+                        <button type="button" id="submitBtn" class="btn btn-primary ">注册</button>
+                        <p class="text-right"><a href="/html/login.html" style ="text-decoration:none;">已有账号，去登录！</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script src="/resource/js/jquery.min.js"></script>
+<script src="/resource/js/pop-up_cookieCheck.js"></script>
+<script>
+    ; (function () {
+        // 实现用户名验证功能
+        var username = document.getElementById("username");
+        var password = document.getElementById("password");
+        var submitBtn = document.getElementById("submitBtn");
+        var passwordTips = document.getElementById("passwordTips");
+        var shoppingCart = document.getElementById("shoppingCart");
+        // 退出操作
+        // var quit = document.getElementById("quit");
+        // quit.onclick = function () {
+        //     if (!isLogin) {
+        //         Panel();
+        //     } else {
+        //         document.cookie = "islogin" + "=" + "aa;max-age=-1";
+        //         document.cookie = "password" + "=" + "aa;max-age=-1";
+        //         document.cookie = "username" + "=" + "aa;max-age=-1";
+        //         Panel("<h3>您已退出登录。</h3>");
+        //     }
+        // }
+        // 点击购物车时的跳转
+        shoppingCart.onclick = function () {
+            isLanded();
+        }
+        // 定义两把锁  一把决定用户名是否验证通过 一把决定密码是否验证通过
+        var user_lock = false;
+        var pass_lock = false;
+        // 输入框失去焦点的时候 发送请求
+        username.onblur = function () {
+            // 获取用户输入的文本
+            var val = username.value;
+            var usernameTips = document.getElementById("usernameTips");
+            // 定义正则表达式
+            var reg = /^\w{6,14}/;
+            // 验证是否符合正则的规则
+            if (!reg.test(val)) {
+                usernameTips.innerHTML = "请输入6-14个数字、字母、下划线";
+                user_lock = false;
+                return;
+            }
+            // 发送请求
+            $.ajax({
+                url: "/php/checkusername.php",
+                type: "get",
+                data: { username: val },
+                dataType: "json"
+            })
+                .then(function (date) {
+                    usernameTips.innerHTML = `${date.msg}`
+                    user_lock = true;
+                })
+                .catch(function () {
+                    console.log("用户名接口语法错误")
+                    user_lock = false;
+                })
+        }
+
+        // 当密码输入框聚焦验证正则表达式
+        password.onfocus = function () {
+            var val = password.value;
+            var reg = /^[A-Z]\w{5,}/;
+            if (!reg.test(val)) {
+                passwordTips.innerHTML = "首位大写字母，6位以上的数字、字母、下划线"
+                pass_lock = false;
+            }else{
+                passwordTips.innerHTML = "符合条件"
+                pass_lock = true;
+            }
+        }
+        // 密码框失焦点
+        password.onblur = function () {
+            var val = password.value;
+            var reg = /^[A-Z]\w{5,}/;
+            if (!reg.test(val)) {
+                passwordTips.innerHTML = "首位大写字母，6位以上的数字、字母、下划线"
+                pass_lock = false;
+            }else{
+                passwordTips.innerHTML = "符合条件"
+                pass_lock = true;
+            }
+        }
+
+        submitBtn.onclick = function () {
+            // 思路： 我们不可以直接发送请求 而是要先看用户名和密码是否都通过了验证 都通过才发送  任何一个不通过的话 不发送请求
+            // 通过判定 两把锁的状态决定是否发送请求
+            if (!(user_lock && pass_lock)) {
+                return;
+            }
+            // 发送ajax
+            $.ajax({
+                url: "/php/register.php",
+                type: "post",
+                data: { username: username.value, password: password.value },
+                dataType: "json"
+            })
+                .then(function (date) {
+                    console.log("成功")
+                    // 成功之后 我们要跳转到登录页面 
+                    location.href = "/html/login.html";
+                })
+                .catch(function () {
+                    console.log("注册按钮接口语法错误")
+                })
+        }
+
+    })();
+
+
+
+
+
+</script>
+
+
+
+</html>

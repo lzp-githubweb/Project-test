@@ -1,0 +1,172 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>购物车</title><link rel="shortcut icon" href="#"><link type="text/css" rel="stylesheet" href="/resource/css/bootstrap.min.css"></head><body><div class="container"><ul class="nav"><li class="nav-item"><a class="nav-link" href="/index.html">首页</a></li><li class="nav-item"><a class="nav-link disabled" href="/html/shoppingCart.html" tabindex="-1" aria-disabled="true">购物车</a></li><li class="nav-item"><a class="nav-link" href="/html/login.html">登录</a></li><li class="nav-item"><a class="nav-link" href="/html/register.html">注册</a></li><!-- <li class="nav-item">
+                <a id="quit" class="nav-link">退出登录</a>
+            </li> --></ul></div><div id="header"><div class="container"><h1>购物车</h1></div></div><div id="content"><div class="container"><table class="table"></table><h3>总计：<label id="sum">0</label></h3></div></div><div id="footer"><div class="container"></div></div><script src="/resource/js/cookieCheck.js"></script><script src="/resource/js/pop-up_cookieCheck.js"></script><script>// 再从本地存储中把数据拿出来
+        var shoppingCart = JSON.parse(localStorage.getItem("shoppingCart")) || [];
+        var table = document.querySelector("table");
+        var sum = document.getElementById("sum");
+        // // 退出操作
+        // var quit = document.getElementById("quit");
+        // quit.onclick = function () {
+        //     if (!isLogin) {
+        //         Panel();
+        //         console.log(0)
+        //     } else {
+        //         console.log(1)
+        //         document.cookie = "islogin" + "=" + "aaa;max-age=-1";
+        //         document.cookie = "password" + "=" + "aaa;max-age=-1";
+        //         document.cookie = "username" + "=" + "aaa;max-age=-1";
+        //         Panel("<h3>您已退出登录。</h3>");
+        //     }
+        // }
+
+        // 渲染购物车的函数
+        function render() {
+            // 全选的操作
+            var isAllCheck = shoppingCart.every(value => {
+                return value.isChecked;
+            });
+            // console.log(isAllCheck)
+            // 购物车的标题
+            var str = ` <thead>
+                    <tr>
+                        <th><input class="allCheck" type="checkbox" ${isAllCheck ? "checked" : ""} >全选</th>
+                        <th scope="col">商品ID</th>
+                        <th scope="col">商品名称</th>
+                        <th scope="col">商品价格</th>
+                        <th scope="col">数量</th>
+                        <th scope="col">操作</th>
+                        <th scope="col">删除</th>
+                    </tr>
+                </thead>
+                <tbody >`;
+            // 购物车列表
+            shoppingCart.forEach(value => {
+                str += `
+                    <tr>
+                        <th scope="row"><input data-id="${value.goods_id}" class="singleCheck" ${value.isChecked ? "checked" : ""} type="checkbox"/></th>
+                        <th scope="row">${value.goods_id}</th>
+                        <td title="${value.goods_name}"><span style="display: inline-block;width: 300px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;"><a target="_blank" style ="text-decoration:none;" href="/html/detail.html?id=${value.goods_id}">${value.goods_name}</a></span></td>
+                        <td>${value.goods_price}</td>
+                        <td>${value.count}</td>
+                        <td><button type="button" class="btn increase" data-id="${value.goods_id}">+</button ><button type="button" data-id="${value.goods_id}" class="btn decrease">-</button></td>
+                        <td class="d-flex justify-content-md-center"><button type="button" class="close" aria-label="关闭">
+                            <span class="del" aria-hidden="true" data-id="${value.goods_id}" >&times;</span>
+                          </button></td>
+                    </tr>
+                `;
+            })
+
+            if (!shoppingCart.length) {
+                str = "<h1><a href='/index.html'  style ='text-decoration:none;' >您的购物车空空如也，请去挑选一些商品吧！！！</a></h1>"
+            }
+
+
+            table.innerHTML = str;
+        }
+
+        // 计算总价的函数 
+        function checkin() {
+            // 根据数组中所有的拥有isChekced属性的对象的价格和数量相乘再累计
+            var sumPrice = 0;
+            // 将购物车的每一项计算，保存在sumPrice上
+            shoppingCart.forEach(value => {
+                if (value.isChecked) {
+                    sumPrice += value.goods_price * value.count;
+                }
+            });
+            sum.innerHTML = "￥" + sumPrice;
+            // 如果没有样式，消失；
+            if (!shoppingCart.length) {
+                sum.parentNode.style.display = "none";
+            }
+        }
+
+        // 将本地存储的数据更新
+        function update() {
+            localStorage.setItem("shoppingCart", JSON.stringify(shoppingCart));
+        }
+        // 调用渲染样式
+        render();
+        // 调用总价样式
+        checkin();
+
+        // 使用委托模式添加事件
+        table.onclick = function (e) {
+            // 判定是否是全选
+            if (e.target.className === "allCheck") {
+                // 全选，
+                shoppingCart.forEach(value => {
+                    value.isChecked = e.target.checked;
+                });
+                render();
+                checkin();
+
+                return;
+            }
+            // 判定是否是单选
+            if (e.target.className === "singleCheck") {
+                // 确定是哪一件商品
+                // 从input身上获取商品id
+                var id = e.target.getAttribute("data-id");
+                // console.log(id);
+                // 根据id从数组中找到对应的商品信息
+                var goodsInfo = shoppingCart.find(value => {
+                    return value.goods_id === id;
+                });
+                console.log(goodsInfo)
+                // 将当前的input状态与goodsInfo的isChecked设置为一个值(要么都是真 要么都是假)
+                goodsInfo.isChecked = e.target.checked;
+                render();
+                checkin();
+                update();
+                return;
+            }
+
+            if (e.target.className.includes("increase")) {
+                // 获取id
+                var id = e.target.getAttribute("data-id");
+                // 根据id找到对应的数据
+                var goodsInfo = shoppingCart.find(value => {
+                    return value.goods_id === id;
+                });
+                // 增加数据的count属性值
+                goodsInfo.count++;
+                render();
+                checkin();
+                update();
+                return;
+            }
+            if (e.target.className.includes("decrease")) {
+                // 获取id
+                var id = e.target.getAttribute("data-id");
+                // 根据id找到对应的数据
+                var goodsInfo = shoppingCart.find(value => {
+                    return value.goods_id === id;
+                });
+                // 增加数据的count属性值
+                goodsInfo.count--;
+                if (goodsInfo.count <= 0) {
+                    goodsInfo.count = 0;
+                }
+                render();
+                checkin();
+                update();
+                return;
+            }
+
+            if (e.target.className === "del") {
+                // 获取id
+                var id = e.target.getAttribute("data-id");
+                // 根据id找到对应的数据的索引
+                var goodsInfoIdx = shoppingCart.findIndex(value => {
+                    return value.goods_id === id;
+                });
+                // 删除数组中的数据 
+                shoppingCart.splice(goodsInfoIdx, 1);
+                render();
+                checkin();
+                update();
+                return;
+            }
+
+        }</script></body></html>

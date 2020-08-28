@@ -1,0 +1,105 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>详情页</title><link rel="shortcut icon" href="#"><link type="text/css" rel="stylesheet" href="/resource/css/bootstrap.min.css"></head><body><div id="header"><div class="container"><ul class="nav"><li class="nav-item"><a class="nav-link" href="/index.html">首页</a></li><li class="nav-item"><a id="shoppingCart" class="nav-link" href="#">购物车</a></li><li class="nav-item"><a class="nav-link" href="/html/login.html">登录</a></li><li class="nav-item"><a class="nav-link" href="/html/register.html">注册</a></li><!-- <li class="nav-item">
+                    <a id="quit" class="nav-link">退出登录</a>
+                </li> --></ul></div></div><div id="header"><div class="container"><h3>商品详情</h3></div></div><div id="content"><div class="container"><div class="row" id="box"></div></div></div><div id="footer"><div class="container"></div></div><script src="/resource/js/jquery.min.js"></script><script src="/resource/js/pop-up_cookieCheck.js"></script><script>// // 退出操作
+        // var quit = document.getElementById("quit");
+        // quit.onclick = function () {
+        //     if (!isLogin) {
+        //         Panel();
+        //     } else {
+        //         document.cookie = "islogin" + "=" + "aaa;max-age=-1";
+        //         document.cookie = "password" + "=" + "aaa;max-age=-1";
+        //         document.cookie = "username" + "=" + "aaa;max-age=-1";
+        //         Panel("<h3>您已退出登录。</h3>");
+        //     }
+        // }
+
+        // 导航栏跳转至购物车
+        var shoppingCart = document.getElementById("shoppingCart");
+        shoppingCart.onclick = function () {
+            isLanded();
+        }
+
+        // 想办法得到URL中的querystring部分的id
+        // 获取里面的指定部分
+        var getParam = function (key) {
+            // ?之后的
+            var querystring = location.search.slice(1);
+            // 以&打断，成为数组
+            var arr = querystring.split("&");
+            // 循环每一项
+            for (var i = 0; i < arr.length; i++) {
+                // 以=号打断，成为数组；
+                var subArr = arr[i].split("=");
+                if (key === subArr[0]) {
+                    return subArr[1];
+                }
+            }
+        }
+
+        var id = getParam("id");
+        var box = document.getElementById("box");
+        // 页面加载
+        var load = new loading();
+
+        $.ajax({
+            url: "/php/getGoodsinfoById.php",
+            type: "get",
+            data: { id },
+            dataType: "json"
+        })
+            .then(function ({ error, data }) {
+                if(box.innerText === "") {
+                    load.hide();
+                }
+                // 请求回来的是单项的信息；
+                box.innerHTML = `
+                        <div class="col-6">
+                            <div class="card" >
+                                <img src="${data.goods_big_logo}" class="card-img-top" alt="...">
+                                <div class="card-body">
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <p class="card-text">${data.goods_name}</p>
+                            <h3>库存： ${data.goods_number}</h3>
+                            <h3>价格： ￥${data.goods_price}</h3>
+                            <button id="btn_shoppingCart" type="button" class="btn btn-primary">加入购物车</button>
+                        </div>
+                     ${data.goods_introduce}
+                     `;
+                // 商品添加购物车事件
+                var btn_shoppingCart = document.getElementById("btn_shoppingCart");
+                btn_shoppingCart.onclick = function () {
+                    if (!isLogin) {
+                        Panel();
+                    } else {
+                        // 弹窗
+                        Panel(data.goods_name);
+                        // 1 先把本地存储中的数组取出来，如果是没有shoppingCart，就给他个[]的字符串
+                        var shoppingCartString = localStorage.getItem("shoppingCart") || "[]";
+                        // 2 将字符串转为数组
+                        var shoppingCartArr = JSON.parse(shoppingCartString);
+                        // 3先判断数组里是否已经有ID这一项的这个对象 
+                        var isExists = shoppingCartArr.find(value => value.goods_id ===data.goods_id );
+                        // 4根据判定结果执行不同的业务逻辑
+                        if (isExists) {
+                            // 如果存在直接数量加1
+                            isExists.count++;
+                        } else {
+                            // 5往数组里加入选中的这个属性，添加到他的对象中
+                            data.count = 1;
+                            shoppingCartArr.push(data);
+                        }
+                        // 6 回转成字符串并存到本地存储里
+                        localStorage.setItem("shoppingCart", JSON.stringify(shoppingCartArr));
+                    }
+                }
+
+
+
+            })
+            .catch(function () {
+                console.log("getGoodsinfoById.php接口语法错误")
+            })</script></body></html>

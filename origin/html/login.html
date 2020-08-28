@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录</title>
+    <link rel="shortcut icon" href="#">
+    <link rel="stylesheet" href="/resource/css/bootstrap.min.css">
+
+</head>
+
+<body>
+    <div id="header">
+        <div class="container">
+            <ul class="nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/index.html">首页</a>
+                </li>
+                <li class="nav-item">
+                    <a id="shoppingCart" class="nav-link" href=#>购物车</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="/html/login.html" tabindex="-1" aria-disabled="true">登录</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/html/register.html">注册</a>
+                </li>
+                <!-- <li class="nav-item">
+                    <a id="quit" class="nav-link">退出登录</a>
+                </li> -->
+            </ul>
+        </div>
+    </div>
+    <div id="content">
+        <div class=" d-flex container justify-content-center">
+            <div class="col-6">
+                <h3 class="text-center">登录</h3>
+                <form>
+                    <div class="form-group">
+                        <label for="">用户名</label>
+                        <input type="text" class="form-control" id="username">
+                        <span id="usernameTips">
+
+                        </span>
+                    </div>
+                    <div class="form-group">
+                        <label for=" ">密码</label>
+                        <input type="password" class="form-control" id="password">
+                        <span id="passwordTips"></span>
+                    </div>
+                    <div class="text-center">
+                        <button type="button" id="submitBtn" class="btn btn-primary ">登录</button>
+                        <div class=" d-flex container justify-content-between">
+                            <p class="text-left"><a href="/html/register.html" style ="text-decoration:none;">注册账号！</a></p>
+                            <p class="text-right"><a href="/html/findPassword.html" style="text-decoration:none;">忘记密码？</a></p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script src="/resource/js/jquery.min.js"></script>
+<script src="/resource/js/pop-up_cookieCheck.js"></script>
+<script>
+    ; (function () {
+        // 实现用户名验证功能
+        var username = document.getElementById("username");
+        var password = document.getElementById("password");
+        var submitBtn = document.getElementById("submitBtn");
+        var passwordTips = document.getElementById("passwordTips");
+        var shoppingCart = document.getElementById("shoppingCart");
+        var content = document.getElementById("content");
+        // 退出操作
+        // var quit = document.getElementById("quit");
+        // quit.onclick = function () {
+        //     if (!isLogin) {
+        //         Panel();
+        //     } else {
+        //         document.cookie = "islogin" + "=" + "aaa;max-age=-1";
+        //         document.cookie = "password" + "=" + "aaa;max-age=-1";
+        //         document.cookie = "username" + "=" + "aaa;max-age=-1";
+        //         Panel("<h3>您已退出登录。</h3>");
+        //     }
+        // }
+        // 点击购物车时的跳转
+        shoppingCart.onclick = function () {
+            isLanded();
+        }
+        // 判断是否登录过
+        if (isLogin) {
+            content.innerHTML = `
+            <h1 style="text-align: center;">您已经登录过了！！！</h1>
+            `;
+            return
+        }
+
+        // 输入框失去焦点的时候 
+        username.onblur = function () {
+            // 获取用户输入的文本
+            var val = username.value;
+
+            var usernameTips = document.getElementById("usernameTips");
+            // 定义正则表达式
+            var reg = /^\w{6,14}/;
+            // 验证是否符合正则的规则
+            if (!reg.test(val)) {
+                usernameTips.innerHTML = "请输入6-14个数字、字母、下划线";
+                password.value = "";
+            } else {
+                usernameTips.innerHTML = "";
+            }
+        }
+        // 密码框聚焦的时候；
+        password.onfocus = function () {
+            passwordTips.innerHTML = "";
+        }
+
+        submitBtn.onclick = function () {
+            // 发送ajax
+            $.ajax({
+                url: "/php/login.php",
+                type: "post",
+                data: { username: username.value, password: password.value },
+                dataType: "json"
+            })
+                .then(function (date) {
+                    if (!date.error) {
+                        // 成功之后 我们要跳转到首页页面 
+                        var targetURL = location.hash.slice(1) || "/index.html";
+                        location.href = targetURL;
+                    } else {
+                        passwordTips.innerHTML = `${date.msg}`
+                    }
+                })
+                .catch(function () {
+                    console.log("登录接口语法错误")
+                })
+        }
+
+    })();
+
+
+
+
+
+</script>
+
+
+
+</html>
